@@ -20,14 +20,8 @@
 <!-- Cała tablica przewijana horyzontalnie na wąskich ekranach -->
 <div class="lt-board-scroll">
   <div class="lt-board-row">
-   {% if board %}
-     {% for ts, data in board.items() %}
-    {% for lane, rows in data.lanes.items() %}
-   {% else %}
-     <!-- Fallback: wyświetl puste karty jeśli brak danych -->
-     {% set ts = "17:00" %}
-     {% set data = {"lanes": {"L01": [], "L02": [], "L03": []}, "headers": {"L01": {"trailer": "00000000", "status": "PL", "ship_date": ""}, "L02": {"trailer": "00000000", "status": "PL", "ship_date": ""}, "L03": {"trailer": "00000000", "status": "PL", "ship_date": ""}}, "ship_date": ""} %}
-     {% for lane, rows in data.lanes.items() %}
+   {% for ts, data in board.items() %}
+  {% for lane, rows in data.lanes.items() %}
 
     {# --- Per-lane nagłówek: bezpiecznie pobierz wartości z data.headers[lane] --- #}
     {% set _hdrs = data.headers if data.headers is defined and data.headers else {} %}
@@ -214,7 +208,6 @@
 
       {% endfor %}
     {% endfor %}
-   {% endif %}
 
   </div>
 </div>
