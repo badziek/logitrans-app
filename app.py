@@ -127,6 +127,19 @@ def users_manage():
         users = db.query(User).all()
     return render_template("users.html", users=users)
 
+@app.route("/clear_all_data")
+@login_required
+@require_roles(Role.ADMIN)
+def clear_all_data():
+    """Endpoint do wyczyszczenia wszystkich danych z bazy"""
+    from models import Load
+    
+    with SessionLocal() as db:
+        # Usuń wszystkie rekordy Load
+        db.query(Load).delete()
+        db.commit()
+        return f"Wyczyszczono wszystkie dane z bazy! <a href='/loads'>Przejdź do Tablicy</a>"
+
 @app.route("/add_test_data")
 @login_required
 @require_roles(Role.ADMIN)

@@ -46,6 +46,11 @@ def list_loads():
 
     # 3 stałe pasy i sortowanie po seq
     fixed_lanes = ["L01", "L02", "L03"]
+    
+    # Jeśli board jest pusty (brak danych w bazie), dodaj domyślny time slot
+    if not board:
+        board["17:00"] = {"trailers": set(), "lanes": {}, "ship_date": ""}
+    
     for ts, data in board.items():
         data["trailer_text"] = ", ".join(sorted(data["trailers"])) if data["trailers"] else "00000000"
 
