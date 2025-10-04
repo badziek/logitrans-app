@@ -1,0 +1,31 @@
+/* ============== BASE (reset, typografia, kolory) ============== */
+
+/* Antyaliasing i spójny rendering */
+html {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* Bazowe kolory i cienie jako CSS variables (na przyszłość) */
+:root {
+  --lt-bg: #fcfdff;
+  --lt-card-border: #e6e8ee;
+  --lt-border: #e5e9f0;
+  --lt-border-head: #e1e5eb;
+  --lt-text-muted: #606878;
+  --lt-text-strong: #242a3c;
+  --lt-accent-100: #ffc8a0;
+  --lt-accent-200: #ffb285;
+}
+
+/* Przyjazny cień */
+.shadow-soft { box-shadow: 0 10px 22px rgba(16,24,40,.06); }
+
+/* Utility */
+.text-muted-700 { color: var(--lt-text-muted); }
+.fw-600 { font-weight: 600; }
+.fw-700 { font-weight: 700; }
+
+/* Przycisk pełnego ekranu – wspólne */
+#fsBtn { box-shadow: 0 4px 14px rgba(0,0,0,.25); }

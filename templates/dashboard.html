@@ -1,0 +1,266 @@
+{% extends 'base.html' %}
+{% block content %}
+
+{# ===== Lista 24 pozycji z Excela (OPIS, AREA, SEQ) ===== #}
+{% set default_area_seq = [
+  ('STABILIZATOR','J01','C31251'), ('PODPORA','J02','C31152'),
+  ('L.STAB','J03','C31252'),      ('PODPORA','J04','C31154'),
+  ('L.STAB','J05','C31253'),      ('AMOR','J06','C31118'),
+  ('AMOR','J07','C31221'),        ('AMOR','J08','C31121'),
+  ('HEBEL','J09','C31124'),       ('PRZEWODY','J10','C32146'),
+  ('WIĄZKI PA KRK','J11','C32212'),('AD BLUE','J12','C32524'),
+  ('AD BLUE','J13','C32253'),     ('RURA','J14','C32260'),
+  ('KOMIN','J15','C32370'),       ('BŁOTNIKI','J16','C32280'),
+  ('INSTRUKCJE','J17','C33523'),  ('BELKA','J18','C31165'),
+  ('PŁUG','J19','C32190'),        ('RAM','J20','C31301'),
+  ('RAM','J21','C31302'),         ('FILTR','J22','C32096'),
+  ('BLACHA','J23','C32047'),      ('FARTUCH','J24','C32045')
+] %}
+
+<!-- Cała tablica przewijana horyzontalnie na wąskich ekranach -->
+<div class="lt-board-scroll">
+  <div class="lt-board-row">
+   {% for ts, data in board.items() %}
+  {% for lane, rows in data.lanes.items() %}
+
+    {# --- Per-lane nagłówek: bezpiecznie pobierz wartości z data.headers[lane] --- #}
+    {% set _hdrs = data.headers if data.headers is defined and data.headers else {} %}
+    {% set _hdr  = _hdrs.get(lane, {}) %}
+
+    {# Klucze zgodne z loads.py: trailer / status / time_slot #}
+    {% set trailer    = (_hdr.get('trailer')    or data.trailer_text or '00000000') %}
+    {% set cur_status = (_hdr.get('status')     or 'PL') %}
+    {% set cur_time   = (_hdr.get('time_slot')  or (ts if ':' in ts else '17:00')) %}
+
+    {# Jeśli masz gdzieś date/ship_date – użyj; w przeciwnym razie zostaw puste #}
+    {% set cur_date   = (data.ship_date or '') %}
+
+    {# --- Zbuduj mapę rekordów DB po AREA (żeby łatwo łączyć wiersze) --- #}
+    {% set by_area = namespace(d={}) %}
+    {% if rows %}
+      {% for r in rows %}
+        {% if r.area %}
+          {% set _ = by_area.d.update({ r.area: r }) %}
+        {% endif %}
+      {% endfor %}
+    {% endif %}
+        <div class="lt-lane" data-lane="{{ lane }}" data-time="{{ ts }}">
+          <div class="lt-card shadow-soft">
+
+            <!-- Nagłówek karty – układ siatką -->
+            <div class="lt-card-header">
+              {% if current_user.role.name != 'USER' %}
+              <form class="m-0" method="post" action="{{ url_for('loads.update_header') }}">
+              {% else %}
+              <!-- Dla USER - formularz tylko do odczytu, bez możliwości edycji -->
+              <form class="m-0" style="pointer-events: none;">
+              {% endif %}
+                <!-- numer L01/L02/L03 w prawym górnym rogu -->
+                <span class="lt-lane-pill">{{ lane }}</span>
+
+                <!-- siatka: 1 rząd (TRAILER | STATUS), 2 rząd (DATA | CZAS | WYCZYŚĆ) -->
+                <div class="lt-hdr-grid">
+                  <div class="lt-hdr-field">
+                    <div class="lt-hdr-label">TRAILER:</div>
+                    {% if current_user.role.name == 'USER' %}
+                      <input class="form-control lt-input-pill trailer-strong"
+                             name="trailer_no"
+                             value="{{ trailer }}"
+                             placeholder="np. 88888888" inputmode="numeric" autocomplete="off" readonly>
+                    {% else %}
+                      <input class="form-control lt-input-pill trailer-strong"
+                             name="trailer_no"
+                             value="{{ trailer }}"
+                             placeholder="np. 88888888" inputmode="numeric" autocomplete="off">
+                    {% endif %}
+                  </div>
+
+                  <div class="lt-hdr-field">
+                    <div class="lt-hdr-label">STATUS:</div>
+                    {% if current_user.role.name == 'USER' %}
+                      <!-- Dla USER - taki sam wygląd jak SUPERVISOR, ale tylko do odczytu -->
+                      <div class="lt-pill w-30">
+                        <select class="lt-select" name="status" id="hdr-status-{{ ts }}-{{ lane }}" disabled style="background: #f8f9fa; border: 1px solid #dee2e6; color: #495057; cursor: default;">
+                          <option value="PL" {{ 'selected' if cur_status=='PL' else '' }}>Planned</option>
+                          <option value="PA" {{ 'selected' if cur_status=='PA' else '' }}>Picking Active</option>
+                          <option value="LO" {{ 'selected' if cur_status=='LO' else '' }}>Loaded</option>
+                        </select>
+                        <span class="lt-caret"></span>
+                      </div>
+                    {% else %}
+                      <div class="lt-pill w-30">
+                        <select class="lt-select" name="status" id="hdr-status-{{ ts }}-{{ lane }}">
+                          <option value="PL" {{ 'selected' if cur_status=='PL' else '' }}>Planned</option>
+                          <option value="PA" {{ 'selected' if cur_status=='PA' else '' }}>Picking Active</option>
+                          <option value="LO" {{ 'selected' if cur_status=='LO' else '' }}>Loaded</option>
+                        </select>
+                        <span class="lt-caret"></span>
+                      </div>
+                    {% endif %}
+                  </div>
+
+                  <div class="lt-hdr-field">
+                    <div class="lt-hdr-label">DATA:</div>
+                    {% if current_user.role.name == 'USER' %}
+                      <input class="form-control lt-input-pill"
+                             type="date" name="ship_date"
+                             value="{{ cur_date }}" autocomplete="off" readonly>
+                    {% else %}
+                      <input class="form-control lt-input-pill"
+                             type="date" name="ship_date"
+                             value="{{ cur_date }}" autocomplete="off">
+                    {% endif %}
+                  </div>
+
+                  <div class="lt-hdr-field">
+                    <div class="lt-hdr-label">CZAS:</div>
+                    {% if current_user.role.name == 'USER' %}
+                      <input class="form-control lt-input-pill"
+                             type="time" name="time_slot"
+                             value="{{ cur_time }}" autocomplete="off" readonly>
+                    {% else %}
+                      <input class="form-control lt-input-pill"
+                             type="time" name="time_slot"
+                             value="{{ cur_time }}" autocomplete="off">
+                    {% endif %}
+                  </div>
+
+                  {% if current_user.role.name != 'USER' %}
+                  <div class="lt-hdr-field" id="clear-btn-{{ ts }}-{{ lane }}" 
+                       style="display: {% if cur_status == 'LO' %}block{% else %}none{% endif %};">
+                    <div class="lt-hdr-label">&nbsp;</div>
+                    <button type="button" class="btn btn-warning lt-clear-btn" 
+                            onclick="clearLaneData('{{ ts }}', '{{ lane }}')">
+                      WYCZYŚĆ
+                    </button>
+                  </div>
+                  {% endif %}
+                </div>
+
+                <!-- hiddeny, żeby zapis był per (ts,lane) -->
+                {% if current_user.role.name != 'USER' %}
+                <input type="hidden" name="lane" value="{{ lane }}">
+                <input type="hidden" name="orig_time_slot" value="{{ ts }}">
+                {% else %}
+                <!-- Dla USER - ukryte pola tylko do odczytu -->
+                <input type="hidden" name="lane" value="{{ lane }}">
+                <input type="hidden" name="orig_time_slot" value="{{ ts }}">
+                {% endif %}
+
+              {% if current_user.role.name != 'USER' %}
+              </form>
+              {% else %}
+              </form>
+              {% endif %}
+            </div>
+
+            <!-- Tabela -->
+            <div class="lt-table-wrap">
+              <table class="lt-table">
+                  <colgroup>
+                    <col style="width:22%">  <!-- OPIS -->
+                    <col style="width:14%">  <!-- AREA -->
+                    <col style="width:16%">  <!-- SEQ -->
+                    <col class="do-zrobienia" style="width:1%">   <!-- DO ZROBIENIA -->
+                    <col class="zrobione"   style="width:1%">   <!-- ZROBIONE -->
+                    <col style="width:18%">  <!-- ZAINFEKOWANE -->
+                    <col style="width:26%">  <!-- PICKER -->
+                  </colgroup>
+                  <thead>
+                    <tr>
+                      <th>OPIS</th>
+                      <th>AREA</th>
+                      <th>SEQ</th>
+                      <th>DO ZROBIENIA</th>
+                      <th>ZROBIONE</th>
+                      <th>ZAINFEKOWANE</th>
+                      <th>PICKER</th>
+                    </tr>
+                  </thead>
+
+                <tbody>
+                  {# MERGE: zawsze 24 wiersze; dla każdego AREA bierzemy rekord z DB (jeśli jest), inaczej puste #}
+                  {% for opis, a, s in default_area_seq %}
+                    {% set r = by_area.d.get(a) %}
+                    {% set fid = r and ('row-' ~ r.id) %}
+                    <tr>
+                      <td>{{ opis }}</td>
+                      <td>{{ a }}</td>
+                      <td class="seq-col">{{ s }}</td>
+
+                      {% if r %}
+                        {% if current_user.role.name == 'USER' %}
+                          <!-- Tylko do odczytu dla USER -->
+                          <td><input name="planned" form="{{ fid }}" class="lt-input lt-cell narrow" value="{{ r.planned or '' }}" autocomplete="off" readonly></td>
+                          <td><input name="done"    form="{{ fid }}" class="lt-input lt-cell narrow" value="{{ r.done or '' }}" autocomplete="off" readonly></td>
+                          <td><input name="lo_code" form="{{ fid }}" class="lt-input lt-cell" value="{{ r.lo_code or '' }}" autocomplete="off" readonly></td>
+                          <td>
+                            <div class="lt-actions">
+                              <input name="picker" form="{{ fid }}" class="lt-input lt-cell" value="{{ r.picker or '' }}" style="width:120px;" autocomplete="off" readonly>
+                        {% else %}
+                          <!-- Pełna edycja dla ADMIN i SUPERVISOR -->
+                          <td><input name="planned" form="{{ fid }}" class="lt-input lt-cell narrow" value="{{ r.planned or '' }}" autocomplete="off"></td>
+                          <td><input name="done"    form="{{ fid }}" class="lt-input lt-cell narrow" value="{{ r.done or '' }}" autocomplete="off"></td>
+                          <td><input name="lo_code" form="{{ fid }}" class="lt-input lt-cell" value="{{ r.lo_code or '' }}" autocomplete="off"></td>
+                          <td>
+                            <div class="lt-actions">
+                              <input name="picker" form="{{ fid }}" class="lt-input lt-cell" value="{{ r.picker or '' }}" style="width:120px;" autocomplete="off">
+                        {% endif %}
+                            {% if current_user.role.name != 'USER' %}
+                            <form id="{{ fid }}" method="post" action="{{ url_for('loads.edit_load', load_id=r.id) }}">
+                              <select name="status" class="d-none">
+                                <option value="PL" {% if r.status=='PL' %}selected{% endif %}>PL</option>
+                                <option value="PA" {% if r.status=='PA' %}selected{% endif %}>PA</option>
+                                <option value="LO" {% if r.status=='LO' %}selected{% endif %}>LO</option>
+                              </select>
+                            </form>
+                            {% else %}
+                            <!-- Dla USER - formularz tylko do odczytu, bez możliwości edycji -->
+                            <form id="{{ fid }}" style="pointer-events: none;">
+                              <input type="hidden" name="status" value="{{ r.status or 'PL' }}">
+                            </form>
+                            {% endif %}
+                          </div>
+                        </td>
+                     {% else %}
+  {# --- NOWOŚĆ: ukryty formularz CREATE dla pustego wiersza --- #}
+  {% set cid = 'create-' ~ ts ~ '-' ~ lane ~ '-' ~ a %}
+  <form id="{{ cid }}" method="post" action="{{ url_for('loads.create_load') }}" class="d-none">
+    <input type="hidden" name="time_slot"  value="{{ cur_time }}">
+    <input type="hidden" name="lane"       value="{{ lane }}">
+    <input type="hidden" name="area"       value="{{ a }}">
+    <input type="hidden" name="status"     value="{{ cur_status }}">
+    <input type="hidden" name="trailer_no" value="{{ trailer }}">
+    <input type="hidden" name="ship_date"  value="{{ cur_date }}">
+    {# opcjonalnie: jeśli chcesz jednak trzymać seq-numerek – zostaw puste / None #}
+    <input type="hidden" name="seq"        value="">
+  </form>
+
+  <td><input name="planned" form="{{ cid }}" class="lt-input lt-cell narrow" placeholder="" autocomplete="off"></td>
+  <td><input name="done"    form="{{ cid }}" class="lt-input lt-cell narrow" placeholder="" autocomplete="off"></td>
+  <td><input name="lo_code" form="{{ cid }}" class="lt-input lt-cell"        placeholder="" autocomplete="off"></td>
+  <td>
+    <div class="lt-actions">
+      <input name="picker" form="{{ cid }}" class="lt-input lt-cell" style="width:120px;" placeholder="" autocomplete="off">
+      <span class="lt-actions-spacer"></span>
+    </div>
+  </td>
+{% endif %}
+
+
+                    </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+
+          </div>
+        </div>
+
+      {% endfor %}
+    {% endfor %}
+
+  </div>
+</div>
+
+{% endblock %}

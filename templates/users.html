@@ -1,0 +1,172 @@
+{% extends 'base.html' %}
+{% block content %}
+<h3>Użytkownicy</h3>
+
+<!-- Formularz dodawania użytkownika -->
+<form class="row g-2" method="post">
+  <input type="hidden" name="action" value="add">
+  <div class="col-md-3"><input class="form-control" name="email" type="email" placeholder="email" required></div>
+  <div class="col-md-3"><input class="form-control" name="full_name" placeholder="Imię i nazwisko" required></div>
+  <div class="col-md-3">
+    <input class="form-control" name="password" id="add_password" placeholder="Hasło" required 
+           pattern="(?=.*[A-Z]).{6,}" 
+           title="Hasło musi mieć minimum 6 znaków i przynajmniej jedną dużą literę">
+    <small class="form-text text-muted">Min. 6 znaków, przynajmniej jedna duża litera</small>
+  </div>
+  <div class="col-md-2">
+    <select class="form-select" name="role">
+      {% if current_user.role.name == 'ADMIN' %}
+        <option value="USER">USER</option>
+        <option value="SUPERVISOR">SUPERVISOR</option>
+        <option value="ADMIN">ADMIN</option>
+      {% else %}
+        <option value="USER">USER</option>
+      {% endif %}
+    </select>
+  </div>
+  <div class="col-md-1"><button class="btn btn-success w-100" type="submit">Dodaj</button></div>
+</form>
+
+<!-- Tabela użytkowników -->
+<table class="table table-striped mt-3">
+  <thead>
+    <tr>
+      <th>Email</th>
+      <th>Imię i nazwisko</th>
+      <th>Rola</th>
+      <th>Aktywny</th>
+      {% if current_user.role.name == 'ADMIN' %}
+        <th>Akcje</th>
+      {% endif %}
+    </tr>
+  </thead>
+  <tbody>
+    {% for u in users %}
+    <tr>
+      <td>{{ u.email }}</td>
+      <td>{{ u.full_name }}</td>
+      <td>{{ u.role.name }}</td>
+      <td>{{ 'Tak' if u.is_active else 'Nie' }}</td>
+      {% if current_user.role.name == 'ADMIN' %}
+        <td>
+          <!-- Przycisk edycji -->
+          <button class="btn btn-sm btn-primary" onclick="editUser({{ u.id }}, '{{ u.email }}', '{{ u.full_name }}', '{{ u.role.name }}')">
+            Edytuj
+          </button>
+          <!-- Przycisk zmiany hasła -->
+          <button class="btn btn-sm btn-warning" onclick="changePassword({{ u.id }}, '{{ u.email }}')">
+            Zmień hasło
+          </button>
+          <!-- Przycisk usuwania -->
+          {% if u.id != current_user.id %}
+            <button class="btn btn-sm btn-danger" onclick="deleteUser({{ u.id }}, '{{ u.email }}')">
+              Usuń
+            </button>
+          {% endif %}
+        </td>
+      {% endif %}
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<!-- Modal edycji użytkownika -->
+<div class="modal fade" id="editUserModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Edytuj użytkownika</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form method="post">
+        <div class="modal-body">
+          <input type="hidden" name="action" value="edit">
+          <input type="hidden" name="user_id" id="edit_user_id">
+          <div class="mb-3">
+            <label class="form-label">Email</label>
+            <input class="form-control" name="email" id="edit_email" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Imię i nazwisko</label>
+            <input class="form-control" name="full_name" id="edit_full_name" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Rola</label>
+            <select class="form-select" name="role" id="edit_role">
+              <option value="USER">USER</option>
+              <option value="SUPERVISOR">SUPERVISOR</option>
+              <option value="ADMIN">ADMIN</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Anuluj</button>
+          <button type="submit" class="btn btn-primary">Zapisz</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal zmiany hasła -->
+<div class="modal fade" id="changePasswordModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Zmień hasło</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form method="post">
+        <div class="modal-body">
+          <input type="hidden" name="action" value="change_password">
+          <input type="hidden" name="user_id" id="password_user_id">
+          <div class="mb-3">
+            <label class="form-label">Użytkownik</label>
+            <input class="form-control" id="password_user_email" readonly>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Nowe hasło</label>
+            <input class="form-control" name="new_password" id="new_password" type="password" required
+                   pattern="(?=.*[A-Z]).{6,}" 
+                   title="Hasło musi mieć minimum 6 znaków i przynajmniej jedną dużą literę">
+            <small class="form-text text-muted">Min. 6 znaków, przynajmniej jedna duża litera</small>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Anuluj</button>
+          <button type="submit" class="btn btn-warning">Zmień hasło</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+function editUser(id, email, fullName, role) {
+  document.getElementById('edit_user_id').value = id;
+  document.getElementById('edit_email').value = email;
+  document.getElementById('edit_full_name').value = fullName;
+  document.getElementById('edit_role').value = role;
+  new bootstrap.Modal(document.getElementById('editUserModal')).show();
+}
+
+function changePassword(id, email) {
+  document.getElementById('password_user_id').value = id;
+  document.getElementById('password_user_email').value = email;
+  new bootstrap.Modal(document.getElementById('changePasswordModal')).show();
+}
+
+function deleteUser(id, email) {
+  if (confirm('Czy na pewno chcesz usunąć użytkownika ' + email + '?')) {
+    const form = document.createElement('form');
+    form.method = 'post';
+    form.innerHTML = `
+      <input type="hidden" name="action" value="delete">
+      <input type="hidden" name="user_id" value="${id}">
+    `;
+    document.body.appendChild(form);
+    form.submit();
+  }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% block content %}
+<h3>KPI – wczytaj plik Excel</h3>
+<form method="post" enctype="multipart/form-data">
+  <div class="input-group mb-3">
+    <input type="file" name="excel" accept=".xlsx,.xls" class="form-control" required>
+    <button class="btn btn-primary" type="submit">Wczytaj i policz</button>
+  </div>
+  <div class="form-text">Oczekiwane kolumny: <code>timestamp, user_email, shift, loads_count</code></div>
+</form>
+{% if results %}
+<div class="row mt-4">
+  <div class="col-md-6">
+    <h5>Wynik per zmiana</h5>
+    <table class="table table-sm">
+      <thead><tr><th>Zmiana</th><th>Łączna liczba załadunków</th></tr></thead>
+      <tbody>
+        {% for r in results.by_shift %}
+        <tr><td>{{ r.shift }}</td><td>{{ r.total_loads }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="col-md-6">
+    <h5>Wynik per użytkownik</h5>
+    <table class="table table-sm">
+      <thead><tr><th>Użytkownik</th><th>Łączna liczba załadunków</th></tr></thead>
+      <tbody>
+        {% for r in results.by_user %}
+        <tr><td>{{ r.user_email }}</td><td>{{ r.total_loads }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

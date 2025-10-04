@@ -1,0 +1,271 @@
+<!doctype html>
+<html lang="pl">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>{{ title or 'LogiTransport' }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/base.css') }}" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/components.css') }}" rel="stylesheet">
+    {% if request.endpoint and request.endpoint.startswith('loads.') %}
+      <link href="{{ url_for('static', filename='css/dashboard.css') }}" rel="stylesheet">
+      <script src="{{ url_for('static', filename='JS/dashboard.js') }}"></script>
+    {% endif %}
+  </head>
+  <body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+      <div class="container-fluid">
+        <a class="navbar-brand" href="{{ url_for('loads.list_loads') }}">LogiTransport</a>
+        <div class="collapse navbar-collapse">
+          <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+            <li class="nav-item"><a class="nav-link" href="{{ url_for('loads.list_loads') }}">Tablica</a></li>
+            <li class="nav-item"><a class="nav-link" href="{{ url_for('kpi.kpi_view') }}">KPI</a></li>
+            {% if current_user.is_authenticated and current_user.role.name in ['ADMIN', 'SUPERVISOR'] %}
+              <li class="nav-item"><a class="nav-link" href="{{ url_for('users_manage') }}">Użytkownicy</a></li>
+            {% endif %}
+          </ul>
+          <span class="navbar-text text-white me-3">{{ current_user.full_name if current_user.is_authenticated else '' }}</span>
+          {% if current_user.is_authenticated %}
+            <a class="btn btn-outline-light" href="{{ url_for('auth.logout') }}">Wyloguj</a>
+          {% endif %}
+        </div>
+      </div>
+    </nav>
+
+    <!-- FLUID bez marginesów, pod TV -->
+    <main class="container-fluid px-0 py-3">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for category, message in messages %}
+            <div class="alert alert-{{ 'danger' if category=='error' else category }} mx-3">{{ message }}</div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+      {% block content %}{% endblock %}
+    </main>
+
+    <!-- Przycisk debugowania – lewy dolny róg -->
+    <div class="position-fixed" style="left:12px; bottom:12px; z-index:10000;">
+      <button id="debugBtn" class="btn btn-sm btn-outline-light"
+              style="background:rgba(0,0,0,.35); border-color:rgba(255,255,255,.5)">
+        🔍 Debug
+      </button>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+
+      // ====== Bezpieczne auto-odświeżanie ======
+      // Warunki wstrzymania:
+      // - fullscreen aktywny
+      // - zakładka niewidoczna (inna karta)
+      // - użytkownik edytuje dane (dirty) lub ma fokus w polu w tabeli
+      // - TYLKO na stronie Tablicy (loads)
+
+      const REFRESH_MS = 30_000;
+      
+      // Sprawdź czy jesteśmy na stronie Tablicy
+      const isLoadsPage = window.location.pathname.includes('/loads') || 
+                         document.querySelector('.lt-table') !== null;
+      
+      if (!isLoadsPage) {
+        // Nie uruchamiaj auto-odświeżania na innych stronach
+        return;
+      }
+      let wantsRefresh = false; // zapamiętujemy, że minął czas na odświeżenie
+      // oznaczamy inputy jako "dirty", by nie gubić wpisów
+      function markInitialValues() {
+        document.querySelectorAll('.lt-table input.lt-input, .lt-table select, .lt-table textarea')
+          .forEach(el => {
+            el.dataset.initial = el.value ?? '';
+            const setDirty = () => el.dataset.dirty = (el.value !== el.dataset.initial) ? '1' : '';
+            el.addEventListener('input', setDirty);
+            el.addEventListener('change', setDirty);
+          });
+
+        // Po submit wiersza uznaj wartości za utrwalone
+        document.querySelectorAll('.lt-table td form').forEach(f => {
+          f.addEventListener('submit', () => {
+            const row = f.closest('tr');
+            row?.querySelectorAll('.lt-input, select, textarea').forEach(el => {
+              el.dataset.initial = el.value ?? '';
+              el.dataset.dirty = '';
+            });
+          });
+        });
+      }
+
+      function shouldReloadNow() {
+        // Zawsze odświeżaj jeśli karta jest widoczna
+        return document.visibilityState === 'visible';
+      }
+
+      function tryReloadIfRequested() {
+        console.log('🔍 tryReloadIfRequested called');
+        console.log('  - wantsRefresh:', wantsRefresh);
+        console.log('  - shouldReloadNow():', shouldReloadNow());
+        
+        if (wantsRefresh && shouldReloadNow()) {
+          wantsRefresh = false;
+          console.log('🔄 Auto-refresh triggered from tryReloadIfRequested');
+          location.reload();
+        } else {
+          console.log('⏳ tryReloadIfRequested: conditions not met');
+        }
+      }
+
+      function scheduleRefreshLoop() {
+        console.log('⏰ Auto-refresh scheduled for', REFRESH_MS, 'ms');
+        setTimeout(() => {
+          console.log('🔍 Checking refresh conditions...');
+          console.log('  - visibilityState:', document.visibilityState);
+          console.log('  - shouldReloadNow():', shouldReloadNow());
+          console.log('  - wantsRefresh:', wantsRefresh);
+          
+          if (shouldReloadNow()) {
+            console.log('🔄 Auto-refresh triggered! Reloading page...');
+            location.reload();
+          } else {
+            console.log('⏳ Auto-refresh delayed - waiting for conditions');
+            // zapamiętaj, że chcieliśmy odświeżyć – zrób to, gdy będzie można
+            wantsRefresh = true;
+            console.log('⏳ Setting wantsRefresh = true, scheduling next check...');
+            scheduleRefreshLoop();
+          }
+        }, REFRESH_MS);
+      }
+
+      document.addEventListener('visibilitychange', tryReloadIfRequested, { passive: true });
+
+      document.addEventListener('DOMContentLoaded', () => {
+        console.log('🚀 Auto-refresh system initialized');
+        console.log('🔍 Initial state:');
+        console.log('  - visibilityState:', document.visibilityState);
+        console.log('  - shouldReloadNow():', shouldReloadNow());
+        console.log('  - REFRESH_MS:', REFRESH_MS);
+        
+        markInitialValues();
+        scheduleRefreshLoop();
+        
+        // Test auto-refresh po 5 sekundach
+        setTimeout(() => {
+          console.log('🧪 Test: Auto-refresh should work in 5 seconds...');
+          console.log('  - Current visibilityState:', document.visibilityState);
+          console.log('  - Current shouldReloadNow():', shouldReloadNow());
+        }, 5000);
+        
+        // Test auto-refresh po 10 sekundach
+        setTimeout(() => {
+          console.log('🧪 Test: Auto-refresh should work in 10 seconds...');
+          console.log('  - Current visibilityState:', document.visibilityState);
+          console.log('  - Current shouldReloadNow():', shouldReloadNow());
+        }, 10000);
+      });
+
+    </script>
+  {% if request.endpoint and request.endpoint.startswith('loads.') %}
+  <script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endif %}
+  <script>
+(() => {
+  // ===== 1) Blokuj Entera w formularzach nagłówka =====
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Enter') return;
+    const headerForm = e.target.closest('.lt-card-header form');
+    if (!headerForm) return;
+    // Nie pozwól na "przypadkowy" submit z pól trailer/data/czas/status
+    if (!e.target.matches('button, [type="submit"]')) {
+      e.preventDefault();
+      e.target.blur(); // estetycznie "zdejmujemy fokus"
+    }
+  }, true);
+
+  // ===== 2) Autosave do localStorage i auto-restore =====
+  // klucz -> unikalnie dla kolumny
+  const keyForLane = (form) => {
+    const lane = form.querySelector('input[name="lane"]')?.value || 'lane-unknown';
+    return `lt_hdr_${lane}`;
+  };
+
+  const readHdr = (form) => ({
+    trailer_no: form.querySelector('input[name="trailer_no"]')?.value || '',
+    status:     form.querySelector('select[name="status"]')?.value || '',
+    time_slot:  form.querySelector('input[name="time_slot"]')?.value || '',
+    ship_date:  form.querySelector('input[name="ship_date"]')?.value || '' // jeśli używasz daty
+  });
+
+  const writeHdr = (form, data) => {
+    if (!data) return;
+    const t = form.querySelector('input[name="trailer_no"]');
+    const s = form.querySelector('select[name="status"]');
+    const time = form.querySelector('input[name="time_slot"]');
+    const date = form.querySelector('input[name="ship_date"]');
+
+    if (t && data.trailer_no != null) t.value = data.trailer_no;
+    if (s && data.status != null)     s.value = data.status, s.dispatchEvent(new Event('change', {bubbles:true}));
+    if (time && data.time_slot != null) time.value = data.time_slot;
+    if (date && data.ship_date != null) date.value = data.ship_date;
+  };
+
+  const saveHdr = (form) => {
+    const key = keyForLane(form);
+    localStorage.setItem(key, JSON.stringify(readHdr(form)));
+  };
+
+  const restoreHdr = (form) => {
+    const key = keyForLane(form);
+    const raw = localStorage.getItem(key);
+    if (!raw) return;
+    try { writeHdr(form, JSON.parse(raw)); } catch {}
+  };
+
+  const clearHdr = (form) => {
+    localStorage.removeItem(keyForLane(form));
+  };
+
+  // Podłącz dla wszystkich nagłówków na stronie
+  document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.lt-card-header form').forEach(form => {
+      // przy starcie – przywróć
+      restoreHdr(form);
+
+      // zapisuj przy każdej zmianie
+      form.addEventListener('input', () => saveHdr(form));
+      form.addEventListener('change', () => saveHdr(form));
+
+      // po udanym POST (zakładamy redirect) – skasuj bufor
+      form.addEventListener('submit', () => clearHdr(form));
+    });
+  });
+})();
+
+// Event listener dla przycisku debug
+const debugBtn = document.getElementById('debugBtn');
+if (debugBtn) {
+  debugBtn.addEventListener('click', () => {
+    console.log('🔍 DEBUG INFO:');
+    console.log('  - visibilityState:', document.visibilityState);
+    console.log('  - shouldReloadNow():', shouldReloadNow());
+    console.log('  - wantsRefresh:', wantsRefresh);
+    console.log('  - REFRESH_MS:', REFRESH_MS);
+    console.log('  - Body classes:', document.body.className);
+    console.log('  - Current time:', new Date().toLocaleTimeString());
+    console.log('✅ Normal mode - no TV or fullscreen mode');
+    
+    // Test manual refresh
+    console.log('🧪 Testing manual refresh...');
+    if (shouldReloadNow()) {
+      console.log('🔄 Manual refresh test: conditions met, reloading...');
+      location.reload();
+    } else {
+      console.log('⏳ Manual refresh test: conditions not met');
+    }
+  });
+}
+</script>
+
+  </body>
+</html>

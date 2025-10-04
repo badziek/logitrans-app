@@ -1,0 +1,399 @@
+/* ——— Karta z gradientem ——— */
+.lt-card {
+  border-radius: 24px;
+  background: #fcfdff;
+  border: 1px solid #e6e8ee;
+  /* dropdown w nagłówku nie może się przycinać */
+  overflow: visible;
+}
+
+/* ——— Kolorowanie wierszy dla Picking Active ——— */
+.lt-table tr.picking-active-row {
+  background: linear-gradient(180deg, #ffc8a0 0%, #ffb285 100%) !important;
+  border-radius: 8px;
+}
+
+.lt-table tr.picking-active-row td {
+  background: transparent !important;
+  border-color: rgba(255, 255, 255, 0.3) !important;
+}
+
+.lt-table tr.picking-active-row .lt-input {
+  background: rgba(255, 255, 255, 0.9) !important;
+  border: 1px solid rgba(255, 255, 255, 0.5) !important;
+  border-radius: 4px !important;
+}
+
+/* ——— Kolorowanie wierszy dla zakończonych (zielone) ——— */
+.lt-table tr.completed-row {
+  background: linear-gradient(180deg, #a8e6a3 0%, #7dd87a 100%) !important;
+  border-radius: 8px !important;
+}
+
+.lt-table tr.completed-row td {
+  background: transparent !important;
+  border-color: rgba(255, 255, 255, 0.3) !important;
+}
+
+.lt-table tr.completed-row .lt-input {
+  background: rgba(255, 255, 255, 0.9) !important;
+  border: 1px solid rgba(255, 255, 255, 0.5) !important;
+  border-radius: 4px !important;
+}
+
+/* ——— Kolorowanie wierszy dla konfliktów ——— */
+.lt-table tr.conflict-row {
+  background: linear-gradient(180deg, #ff6b6b 0%, #ee5a52 100%) !important;
+  border-radius: 8px !important;
+}
+
+.lt-table tr.conflict-row td {
+  background: transparent !important;
+  border-color: rgba(255, 255, 255, 0.3) !important;
+}
+
+.lt-table tr.conflict-row .lt-input {
+  background: rgba(255, 255, 255, 0.9) !important;
+  border: 1px solid rgba(255, 255, 255, 0.5) !important;
+  border-radius: 4px !important;
+}
+
+/* ——— Pogrubienie czcionki w kolumnie SEQ dla konfliktów ——— */
+       .lt-table tr.conflict-row td:nth-child(3) {
+         font-weight: bold !important;
+         color: #ffffff !important;
+       }
+
+/* ——— DODATKOWE STYLE DLA KONFLIKTÓW ——— */
+tr.conflict-row {
+  background: linear-gradient(180deg, #ff6b6b 0%, #ee5a52 100%) !important;
+  border-radius: 8px !important;
+}
+
+
+tr.conflict-row td {
+  background: transparent !important;
+  border-color: rgba(255, 255, 255, 0.3) !important;
+}
+
+tr.conflict-row .lt-input {
+  background: rgba(255, 255, 255, 0.9) !important;
+  border: 1px solid rgba(255, 255, 255, 0.5) !important;
+  border-radius: 4px !important;
+}
+
+tr.conflict-row td:nth-child(3) {
+  font-weight: bold !important;
+  color: #ffffff !important;
+}
+.shadow-soft { box-shadow: 0 10px 22px rgba(16,24,40,.06); }
+
+.lt-card-header {
+  background: linear-gradient(180deg, #ffc8a0 0%, #ffb285 100%);
+  padding: 16px 18px 12px 18px;
+  position: relative;
+  overflow: visible; /* żeby menu dropdownu wychodziło poza header */
+  border-radius: 24px 24px 0 0; /* zaokrąglone rogi tylko u góry */
+}
+
+.lt-hdr-line { color: #242a3c; font-size: 1rem; line-height: 1.25rem; }
+.lt-lane-pill {
+  background: #fff; border: 1px solid #e8e9ef; border-radius: 999px;
+  padding: 8px 16px; font-weight: 700; color: #3d405b;
+}
+
+/* ——— interaktywna kapsułka STATUS (nowoczesny dropdown) ——— */
+.lt-pill{
+  position:relative; display:inline-flex; align-items:center; gap:8px;
+  height:36px; padding:4px 36px 4px 14px; border-radius:999px;
+  border:1px solid #d7dae0; background:#fff; cursor:pointer; user-select:none;
+}
+
+/* Kolory wg statusu (po wybraniu) */
+.lt-pill.status-PL{ background:#eefaf2; border-color:#cfe9d6; }
+.lt-pill.status-PA{ background:#fff7e8; border-color:#f1d9a9; }
+.lt-pill.status-LO{ background:#ffefef; border-color:#efc0c0; }
+
+/* Ukryty natywny <select> – pozostaje do submitu/form */
+.lt-pill .lt-select{
+  position:absolute; inset:0; opacity:0; pointer-events:none;
+}
+
+/* widoczna etykieta toggle */
+.lt-dd-toggle{
+  font-weight:600; color:#2f3545; line-height:1; padding:0 2px;
+}
+
+/* strzałka */
+.lt-caret{
+  position:absolute; right:12px; top:50%; transform:translateY(-50%);
+  width:0; height:0; border-left:6px solid transparent; border-right:6px solid transparent;
+  border-top:7px solid #6f7785; transition:transform .18s ease;
+  pointer-events:none;
+}
+
+/* wrapper */
+.lt-dd{ position:relative; }
+.lt-dd.open .lt-caret{ transform:translateY(-50%) rotate(180deg); }
+
+/* MENU dropdown */
+.lt-dd-menu{
+  position:absolute; left:0; top:calc(100% + 8px); min-width:140px;
+  background:#fff; border:1px solid #e3e7ef; border-radius:12px;
+  box-shadow:0 14px 35px rgba(19,33,68,.12);
+  padding:6px; display:none; z-index:4000; max-height:240px; overflow:auto;
+}
+.lt-dd.open .lt-dd-menu{ display:block; animation:ddIn .14s ease both; }
+@keyframes ddIn{ from{ transform:translateY(-4px); opacity:0 } to{ transform:translateY(0); opacity:1 } }
+
+.lt-dd-item{
+  display:flex; align-items:center; gap:10px;
+  padding:8px 10px; border-radius:10px; cursor:pointer;
+  color:#2f3545; font-weight:600;
+}
+.lt-dd-item:hover{ background:#f2f5fb; }
+.lt-dd-item[aria-selected="true"]{
+  background:#e9f1ff; outline:1px solid #cfe0ff;
+}
+.lt-dd-badge{
+  min-width:36px; text-align:center; border-radius:999px; padding:2px 8px; font-weight:700;
+}
+.badge-PL{ background:#dcf5e4; color:#195e37; }
+.badge-PA{ background:#ffefcf; color:#7b5b00; }
+.badge-LO{ background:#ffdcdc; color:#7b1e1e; }
+
+.lt-dd-toggle:focus{ outline:2px solid #a8c7ff; outline-offset:3px; border-radius:8px; }
+
+/* ——— Tabela ——— */
+.lt-table-wrap { 
+  padding: 16px 12px 18px; 
+  border-radius: 0 0 24px 24px; /* zaokrąglone rogi tylko na dole */
+}
+.lt-table {
+  width: 100%;
+  border-collapse: collapse !important;
+  border-spacing: 0 !important;
+  table-layout: fixed;
+}
+.lt-table thead th {
+  background: #f5f7fa !important; color: #606878; font-weight: 700;
+  text-align: center; padding: 10px 6px; border: 2px solid #e1e5eb !important;
+  white-space: nowrap;
+  overflow: visible;
+}
+.lt-table tbody tr td {
+  background: #fff !important; border: 1px solid #e5e9f0 !important;
+  text-align: center; padding: 6px; vertical-align: middle;
+}
+.lt-cell { min-width: 0; text-align: center; height: 30px; padding: 2px 6px; }
+
+/* Minimalne szerokości kolumn (żeby pola nie nachodziły) */
+.lt-table col:nth-child(1) { min-width: 70px; }   /* OPIS lub AREA */
+.lt-table col:nth-child(2) { min-width: 60px; }   /* AREA lub SEQ  */
+.lt-table col:nth-child(3) { min-width: 88px; }   /* SEQ / DO ZROBIENIA */
+.lt-table col:nth-child(4) { min-width: 100px; }
+.lt-table col:nth-child(5) { min-width: 100px; }
+.lt-table col:nth-child(6) { min-width: 110px; }
+.lt-table col:nth-child(7) { min-width: 120px; }  /* PICKER */
+
+/* Inputy w tabeli */
+.lt-input.lt-cell {
+  display: block;
+  width: 100%;
+  height: 34px;
+  padding: 4px 8px;
+  border: 1px solid #e5e9f0;
+  border-radius: 6px;
+  background: #fff;
+  line-height: 1.2;
+  box-sizing: border-box;
+  outline: none;
+  box-shadow: none;
+}
+.lt-input.lt-cell:focus {
+  border-color: #cfd6e3;
+  box-shadow: 0 0 0 2px rgba(88,120,188,.08);
+}
+
+/* formularze w komórkach */
+.lt-table td form { margin: 0; }
+
+/* ====== przewijanie i układ lanes ====== */
+.lt-board-scroll {
+  overflow-x: auto;
+  padding-bottom: 8px;
+  display: block;
+}
+.lt-board-row {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 12px;
+  width: max-content;   /* szerokość = suma kart */
+  margin: 0 auto;       /* centrowanie gdy mieści się w oknie */
+}
+
+/* Domyślne szerokości kart */
+.lt-lane        { flex: 0 0 660px; }  /* zwykła karta (L02/L03) */
+/* Usunięto lt-lane--opis - wszystkie karty mają identyczną strukturę */
+
+/* Scrollbar (ładniejszy) */
+.lt-board-scroll::-webkit-scrollbar { height: 10px; }
+.lt-board-scroll::-webkit-scrollbar-track { background: #f1f3f7; }
+.lt-board-scroll::-webkit-scrollbar-thumb { background: #cdd3de; border-radius: 6px; }
+.lt-board-scroll::-webkit-scrollbar-thumb:hover { background: #b9c1cf; }
+
+/* ——— TV / duże ekrany ——— */
+@media (min-width: 1900px) {
+  .lt-lane       { flex-basis: 720px; }
+  /* Usunięto lt-lane--opis - wszystkie karty mają identyczną strukturę */
+  .lt-table thead th { font-size: 1.0rem; }
+  .lt-table tbody tr td { font-size: 1.0rem; }
+}
+
+/* ——— Zmniejszamy nieco czcionki dla 1366–1600px ——— */
+@media (max-width: 1600px) {
+  .lt-table thead th { font-size: .90rem; }
+  .lt-table tbody tr td { font-size: .90rem; }
+}
+
+/* === Pionowe nagłówki ZAWSZE (także Full HD / 4K) === */
+.lt-table thead th {
+  writing-mode: vertical-rl;       /* tekst pionowo */
+  transform: rotate(180deg);       /* czytamy z dołu do góry */
+  padding: 8px 4px;
+  height: 140px;
+  white-space: nowrap;
+}
+
+/* WYJĄTKI – poziomo dla stałych kolumn */
+/* Usunięto lt-lane--opis - wszystkie karty mają identyczną strukturę */
+.lt-lane       .lt-table thead th:nth-child(-n+2)   /* L02/L03: AREA, SEQ   */
+{
+  writing-mode: horizontal-tb;
+  transform: none;
+  height: auto;
+  padding: 10px 6px;
+}
+
+/* Zawężone kolumny numeryczne (2 cyfry) */
+.lt-table col.do-zrobienia,
+.lt-table col.zrobione {
+  width: 55px !important;
+  min-width: 55px !important;
+  max-width: 60px;
+}
+.lt-table td input[name="planned"],
+.lt-table td input[name="done"] {
+  text-align: center;
+  width: 100% !important;
+  max-width: 60px;
+}
+
+/* Picker – nigdy poza kolumnę */
+.lt-table td:last-child .lt-input.lt-cell{
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+/* komórka z akcjami: input + przyciski */
+.lt-actions{
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.lt-actions .lt-input.lt-cell{
+  flex: 1 1 0;
+  width: auto !important;
+  max-width: 100% !important;
+  min-width: 0;
+}
+.lt-actions form{ flex: 0 0 auto; }
+
+/* Wąskie inputy numeryczne i wyśrodkowanie */
+.lt-table td input.lt-cell.narrow {
+  width: 50px;
+  margin: 0 auto;
+  display: block;
+  text-align: center;
+}
+
+/* ===== Nagłówek karty – siatka i pozycjonowanie ===== */
+.lt-lane-pill{ position:absolute; right:16px; top:12px; }
+.lt-hdr-grid{
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: auto auto;
+  gap: 12px 12px;
+  padding-right: 84px;              /* miejsce na pigułkę L01/L02/L03 */
+  align-items: center;
+  position: relative;
+}
+
+.lt-hdr-field:nth-child(1) { grid-column: 1; grid-row: 1; } /* TRAILER */
+.lt-hdr-field:nth-child(2) { grid-column: 2; grid-row: 1; } /* STATUS */
+.lt-hdr-field:nth-child(3) { grid-column: 1; grid-row: 2; } /* DATA */
+.lt-hdr-field:nth-child(4) { grid-column: 2; grid-row: 2; } /* CZAS */
+.lt-hdr-field:nth-child(5) { 
+  position: absolute;
+  bottom: 12px;
+  right: 16px;
+  z-index: 10;
+} /* WYCZYŚĆ - w tej samej linii co DATA i CZAS */
+.lt-hdr-field .lt-hdr-label{
+  font-weight: 600;
+  color: #2f3545;
+  margin-bottom: 4px;
+}
+.lt-hdr-actions{
+  margin-top: 10px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.lt-clear-btn {
+  background-color: #ffc107;
+  color: #212529;
+  border: 1px solid #ffc107;
+  border-radius: 20px;
+  padding: 8px 16px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.lt-clear-btn:hover {
+  background-color: #e0a800;
+  border-color: #d39e00;
+  transform: translateY(-1px);
+}
+@media (max-width: 640px){
+  .lt-hdr-grid{
+    grid-template-columns: 1fr;
+    padding-right: 72px;
+  }
+}
+
+/* wyróżnienie SEQ, gdy DO ZROBIENIA niepuste (klasa nakładana JS) */
+td.seq-col.seq-emph {
+  font-weight: 700;
+  color: #0b1220;
+  transition: color .15s ease, font-weight .15s ease;
+}
+
+/* Przycisk pełnego ekranu */
+#fsBtn { box-shadow: 0 4px 14px rgba(0,0,0,.25); }
+
+.lt-input-pill::placeholder {
+  font-weight: bold;
+  color: #888; /* opcjonalnie zmiana koloru */
+}
+/* Pogrubienie cyfr w polu TRAILER */
+.lt-input-pill[name="trailer_no"] {
+  font-weight: 700;   /* pogrubienie */
+  font-size: 1.6rem;
+  font-family: monospace; /* opcjonalnie – równe odstępy cyfr */
+  letter-spacing: 1px;    /* opcjonalnie – lekki odstęp między cyframi */
+}
