@@ -65,7 +65,7 @@
       // - użytkownik edytuje dane (dirty) lub ma fokus w polu w tabeli
       // - TYLKO na stronie Tablicy (loads)
 
-      const REFRESH_MS = 30_000;
+      const REFRESH_MS = 5_000; // Zmienione na 5 sekund dla testów
       
       // Sprawdź czy jesteśmy na stronie Tablicy
       const isLoadsPage = window.location.pathname.includes('/loads') || 
