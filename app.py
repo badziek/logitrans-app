@@ -127,6 +127,93 @@ def users_manage():
         users = db.query(User).all()
     return render_template("users.html", users=users)
 
+@app.route("/add_test_data")
+@login_required
+@require_roles(Role.ADMIN)
+def add_test_data():
+    """Endpoint do dodania przykładowych danych testowych"""
+    from models import Load, Shift
+    
+    with SessionLocal() as db:
+        # Sprawdź czy już są dane
+        existing_loads = db.query(Load).count()
+        if existing_loads > 0:
+            return f"Baza już zawiera {existing_loads} rekordów. Pomijam dodawanie danych."
+        
+        # Dodaj przykładowe dane
+        test_loads = [
+            # Slot 17:00 - L01
+            Load(
+                time_slot="17:00",
+                lane="L01",
+                trailer_no="TR001",
+                status="PL",
+                ship_date="04.10.2025",
+                area="J01",
+                seq=1,
+                planned=100,
+                done=0,
+                lo_code="LO001",
+                picker="Jan Kowalski",
+                shift=Shift.A,
+                created_by_id=current_user.id
+            ),
+            Load(
+                time_slot="17:00",
+                lane="L01",
+                trailer_no="TR001",
+                status="PL",
+                ship_date="04.10.2025",
+                area="J02",
+                seq=2,
+                planned=50,
+                done=0,
+                lo_code="LO002",
+                picker="Anna Nowak",
+                shift=Shift.A,
+                created_by_id=current_user.id
+            ),
+            # Slot 17:00 - L02
+            Load(
+                time_slot="17:00",
+                lane="L02",
+                trailer_no="TR002",
+                status="PA",
+                ship_date="04.10.2025",
+                area="J03",
+                seq=1,
+                planned=75,
+                done=25,
+                lo_code="LO003",
+                picker="Piotr Wiśniewski",
+                shift=Shift.A,
+                created_by_id=current_user.id
+            ),
+            # Slot 18:00 - L01
+            Load(
+                time_slot="18:00",
+                lane="L01",
+                trailer_no="TR003",
+                status="PL",
+                ship_date="05.10.2025",
+                area="J01",
+                seq=1,
+                planned=200,
+                done=0,
+                lo_code="LO004",
+                picker="Maria Kowalczyk",
+                shift=Shift.B,
+                created_by_id=current_user.id
+            ),
+        ]
+        
+        # Dodaj dane do bazy
+        for load in test_loads:
+            db.add(load)
+        
+        db.commit()
+        return f"Dodano {len(test_loads)} przykładowych rekordów do bazy danych! <a href='/loads'>Przejdź do Tablicy</a>"
+
 if __name__ == "__main__":
     import os
     port = int(os.environ.get("PORT", 5000))
