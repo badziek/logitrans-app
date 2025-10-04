@@ -22,7 +22,6 @@
   <div class="lt-board-row">
    {% for ts, data in board.items() %}
   {% for lane, rows in data.lanes.items() %}
-  {% if rows %}  <!-- Pokaż tylko pasy z danymi -->
 
     {# --- Per-lane nagłówek: bezpiecznie pobierz wartości z data.headers[lane] --- #}
     {% set _hdrs = data.headers if data.headers is defined and data.headers else {} %}
@@ -255,7 +254,6 @@
         </div>
 
       {% endfor %}
-    {% endif %}  <!-- Koniec warunku dla pasów z danymi -->
     {% endfor %}
   {% endfor %}
 
