@@ -38,13 +38,11 @@
 
     {# --- Zbuduj mapę rekordów DB po AREA (żeby łatwo łączyć wiersze) --- #}
     {% set by_area = namespace(d={}) %}
-    {% if rows %}
-      {% for r in rows %}
-        {% if r.area %}
-          {% set _ = by_area.d.update({ r.area: r }) %}
-        {% endif %}
-      {% endfor %}
-    {% endif %}
+    {% for r in rows %}
+      {% if r.area %}
+        {% set _ = by_area.d.update({ r.area: r }) %}
+      {% endif %}
+    {% endfor %}
         <div class="lt-lane" data-lane="{{ lane }}" data-time="{{ ts }}">
           <div class="lt-card shadow-soft">
 
@@ -261,6 +259,7 @@
       {% endfor %}
     {% endif %}  <!-- Koniec warunku dla pasów z danymi -->
     {% endfor %}
+  {% endfor %}
 
   </div>
 </div>
