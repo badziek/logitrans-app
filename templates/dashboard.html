@@ -88,6 +88,17 @@
                            type="time" name="time_slot"
                            value="{{ cur_time }}">
                   </div>
+
+                  {% if current_user.role.name != 'USER' %}
+                  <div class="lt-hdr-field" id="clear-btn-{{ ts }}-{{ lane }}" 
+                       style="display: {% if cur_status == 'LO' %}block{% else %}none{% endif %};">
+                    <div class="lt-hdr-label">&nbsp;</div>
+                    <button type="button" class="btn btn-warning lt-clear-btn" 
+                            onclick="clearLaneData('{{ ts }}', '{{ lane }}')">
+                      WYCZYŚĆ
+                    </button>
+                  </div>
+                  {% endif %}
                 </div>
 
                 <!-- hiddeny, żeby zapis był per (ts,lane) -->
